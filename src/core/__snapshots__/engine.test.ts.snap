@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`motor — deterministik regresyon sabit seed + senaryo her zaman aynı sonucu verir 1`] = `
+{
+  "boardSum": 168,
+  "level": 1,
+  "lines": 0,
+  "phase": "gameOver",
+  "score": 196,
+}
+`;
