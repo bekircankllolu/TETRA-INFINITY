@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@state/*": ["./src/state/*"],
+      "@ui/*": ["./src/ui/*"],
+      "@input/*": ["./src/input/*"],
+      "@hooks/*": ["./src/hooks/*"]
+    }
+  }
+}
