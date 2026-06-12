@@ -1,32 +1,39 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { GameAction } from '../core/types';
 import { createRepeater } from '../input/das';
 import { gameStore } from '../state/store';
+import { IMAGES } from './assets';
 import { COLORS } from './theme';
 
 const dispatch = (action: GameAction) => gameStore.getState().dispatch(action);
 
-interface ButtonProps {
-  label: string;
+interface ImageButtonProps {
+  source: ImageSourcePropType;
   onPressIn: () => void;
   onPressOut?: () => void;
-  wide?: boolean;
+  mirrored?: boolean;
+  size?: number;
 }
 
-function ControlButton({ label, onPressIn, onPressOut, wide }: ButtonProps) {
+function ImageButton({ source, onPressIn, onPressOut, mirrored, size = 58 }: ImageButtonProps) {
   return (
     <Pressable
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={({ pressed }) => [styles.button, wide && styles.wide, pressed && styles.pressed]}
+      hitSlop={6}
+      style={({ pressed }) => [pressed && styles.pressed]}
     >
-      <Text style={styles.buttonText}>{label}</Text>
+      <Image
+        source={source}
+        fadeDuration={0}
+        style={[{ width: size, height: size }, mirrored && styles.mirrored]}
+      />
     </Pressable>
   );
 }
 
-/** Dokunmatik jestlere ek opsiyonel buton pedi. ◀▶ basılı tutmada DAS/ARR. */
+/** Dokunmatik jestlere ek buton pedi: neon sprite butonlar, ◀▶'de DAS/ARR */
 export function ControlButtons() {
   const left = useMemo(() => createRepeater(() => dispatch({ type: 'MOVE', dir: -1 })), []);
   const right = useMemo(() => createRepeater(() => dispatch({ type: 'MOVE', dir: 1 })), []);
@@ -34,20 +41,29 @@ export function ControlButtons() {
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <ControlButton label="◀" onPressIn={() => left.start()} onPressOut={() => left.stop()} />
-        <ControlButton
-          label="▼"
+        <ImageButton source={IMAGES.btnLeft} onPressIn={() => left.start()} onPressOut={() => left.stop()} />
+        <ImageButton
+          source={IMAGES.btnSoft}
           onPressIn={() => dispatch({ type: 'SOFT_DROP', on: true })}
           onPressOut={() => dispatch({ type: 'SOFT_DROP', on: false })}
         />
-        <ControlButton label="▶" onPressIn={() => right.start()} onPressOut={() => right.stop()} />
+        <ImageButton source={IMAGES.btnRight} onPressIn={() => right.start()} onPressOut={() => right.stop()} />
         <View style={styles.spacer} />
-        <ControlButton label="⟲" onPressIn={() => dispatch({ type: 'ROTATE', dir: 'ccw' })} />
-        <ControlButton label="⟳" onPressIn={() => dispatch({ type: 'ROTATE', dir: 'cw' })} />
+        <ImageButton mirrored source={IMAGES.btnRotate} onPressIn={() => dispatch({ type: 'ROTATE', dir: 'ccw' })} />
+        <ImageButton source={IMAGES.btnRotate} onPressIn={() => dispatch({ type: 'ROTATE', dir: 'cw' })} />
       </View>
       <View style={styles.row}>
-        <ControlButton label="HOLD" wide onPressIn={() => dispatch({ type: 'HOLD' })} />
-        <ControlButton label="⤓ BIRAK" wide onPressIn={() => dispatch({ type: 'HARD_DROP' })} />
+        <Pressable
+          onPressIn={() => dispatch({ type: 'HOLD' })}
+          style={({ pressed }) => [styles.holdButton, pressed && styles.pressed]}
+        >
+          <Text style={styles.holdText}>HOLD</Text>
+        </Pressable>
+        <ImageButton
+          source={IMAGES.btnHard}
+          size={64}
+          onPressIn={() => dispatch({ type: 'HARD_DROP' })}
+        />
       </View>
     </View>
   );
@@ -57,37 +73,38 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     paddingHorizontal: 16,
-    gap: 8,
+    gap: 6,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    alignItems: 'center',
+    gap: 14,
   },
   spacer: {
-    width: 24,
+    width: 18,
   },
-  button: {
-    minWidth: 56,
-    height: 52,
+  mirrored: {
+    transform: [{ scaleX: -1 }],
+  },
+  pressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.94 }],
+  },
+  holdButton: {
+    minWidth: 120,
+    height: 46,
     borderRadius: 10,
     backgroundColor: COLORS.panel,
     borderWidth: 1,
     borderColor: COLORS.panelBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
   },
-  wide: {
-    flex: 1,
-    maxWidth: 160,
-  },
-  pressed: {
-    backgroundColor: COLORS.panelBorder,
-  },
-  buttonText: {
-    color: COLORS.text,
-    fontSize: 18,
+  holdText: {
+    color: COLORS.accentCyan,
+    fontSize: 15,
     fontWeight: '800',
+    letterSpacing: 3,
   },
 });

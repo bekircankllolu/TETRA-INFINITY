@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { COLS, HIDDEN_ROWS, VISIBLE_ROWS } from '../core/constants';
 import { PIECE_COLOR_ID, pieceCells } from '../core/tetromino';
 import type { ActivePiece } from '../core/types';
 import { useGame } from '../state/store';
+import { BLOCK_TEXTURES } from './assets';
 import { CellView } from './CellView';
-import { CELL_COLORS, COLORS, GHOST_OPACITY } from './theme';
+import { COLORS, GHOST_OPACITY } from './theme';
 
 interface Props {
   cellSize: number;
@@ -29,25 +30,24 @@ function PieceOverlay({ cellSize }: { cellSize: number }) {
   const ghostYPos = useGame((s) => s.game.ghostY);
   if (active === null) return null;
 
-  const color = CELL_COLORS[PIECE_COLOR_ID[active.type]];
+  const texture = BLOCK_TEXTURES[PIECE_COLOR_ID[active.type]];
   const ghost: ActivePiece = { ...active, y: ghostYPos };
 
   const render = (piece: ActivePiece, opacity: number, keyPrefix: string) =>
     pieceCells(piece)
       .filter(([, y]) => y >= HIDDEN_ROWS)
       .map(([x, y], i) => (
-        <View
+        <Image
           key={`${keyPrefix}${i}`}
+          source={texture}
+          fadeDuration={0}
           style={{
             position: 'absolute',
             left: x * cellSize,
             top: (y - HIDDEN_ROWS) * cellSize,
             width: cellSize,
             height: cellSize,
-            backgroundColor: color,
             opacity,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: COLORS.gridLine,
           }}
         />
       ));
@@ -79,7 +79,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.boardBackground,
     borderWidth: 2,
     borderColor: COLORS.panelBorder,
+    borderRadius: 4,
     overflow: 'hidden',
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
   },
   grid: {
     flexDirection: 'row',

@@ -1,19 +1,24 @@
 {
   "expo": {
-    "name": "TETRA-INFINITY",
+    "name": "Tetra Infinity",
     "slug": "TETRA-INFINITY",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/game/emblem.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#06040F",
+    "splash": {
+      "image": "./assets/game/emblem.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#06040F"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
+        "backgroundColor": "#06040F",
+        "foregroundImage": "./assets/game/emblem.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
