@@ -1,10 +1,12 @@
-import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { COLS, HIDDEN_ROWS, VISIBLE_ROWS } from '../core/constants';
 import { PIECE_COLOR_ID, pieceCells } from '../core/tetromino';
 import type { ActivePiece } from '../core/types';
+import { useBlockTextures } from '../hooks/useBlockTextures';
+import { usePrefs } from '../state/prefs';
 import { useGame } from '../state/store';
-import { BLOCK_TEXTURES } from './assets';
+import type { ColorTextureMap } from './assets';
 import { CellView } from './CellView';
 import { ClearEffects } from './ClearEffects';
 import { COLORS, GHOST_OPACITY } from './theme';
@@ -13,28 +15,64 @@ interface Props {
   cellSize: number;
 }
 
-/** Kilitlenmiş hücreler: yalnızca board referansı değişince (kilitte) render olur */
-const SettledGrid = React.memo(function SettledGrid({ cellSize }: { cellSize: number }) {
+/** Kilitlenmiş hücreler: yalnızca board veya skin değişince render olur */
+const SettledGrid = React.memo(function SettledGrid({
+  cellSize,
+  textures,
+}: {
+  cellSize: number;
+  textures: ColorTextureMap;
+}) {
   const board = useGame((s) => s.game.board);
   const cells: React.ReactElement[] = [];
   for (let y = HIDDEN_ROWS; y < HIDDEN_ROWS + VISIBLE_ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
-      cells.push(<CellView key={y * COLS + x} size={cellSize} color={board[y * COLS + x] ?? 0} />);
+      const color = board[y * COLS + x] ?? 0;
+      cells.push(
+        <CellView key={y * COLS + x} size={cellSize} color={color} texture={textures[color]} />
+      );
     }
   }
   return <View style={[styles.grid, { width: cellSize * COLS }]}>{cells}</View>;
 });
 
-/** Aktif parça + ghost: hareketlerde yalnızca bu 8 küçük view güncellenir */
-function PieceOverlay({ cellSize }: { cellSize: number }) {
+/** Aktif parça + ghost. Aktif parça tek satır düşüşlerde yumuşakça kayar. */
+function PieceOverlay({ cellSize, textures }: { cellSize: number; textures: ColorTextureMap }) {
   const active = useGame((s) => s.game.active);
   const ghostYPos = useGame((s) => s.game.ghostY);
+  const showGhost = usePrefs((s) => s.settings.ghostPiece);
+
+  const transY = useRef(new Animated.Value(0)).current;
+  const prevY = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (active === null) {
+      prevY.current = null;
+      transY.setValue(0);
+      return;
+    }
+    const p = prevY.current;
+    // Yalnızca tam bir satırlık düşüşte yumuşat; teleport/spawn/yatay snap
+    if (p !== null && active.y - p === 1) {
+      transY.setValue(-cellSize);
+      Animated.timing(transY, {
+        toValue: 0,
+        duration: 55,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      transY.setValue(0);
+    }
+    prevY.current = active.y;
+  }, [active, cellSize, transY]);
+
   if (active === null) return null;
 
-  const texture = BLOCK_TEXTURES[PIECE_COLOR_ID[active.type]];
+  const texture = textures[PIECE_COLOR_ID[active.type]];
   const ghost: ActivePiece = { ...active, y: ghostYPos };
 
-  const render = (piece: ActivePiece, opacity: number, keyPrefix: string) =>
+  const renderCells = (piece: ActivePiece, opacity: number, keyPrefix: string) =>
     pieceCells(piece)
       .filter(([, y]) => y >= HIDDEN_ROWS)
       .map(([x, y], i) => (
@@ -55,13 +93,19 @@ function PieceOverlay({ cellSize }: { cellSize: number }) {
 
   return (
     <>
-      {ghostYPos !== active.y && render(ghost, GHOST_OPACITY, 'g')}
-      {render(active, 1, 'a')}
+      {showGhost && ghostYPos !== active.y && renderCells(ghost, GHOST_OPACITY, 'g')}
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { transform: [{ translateY: transY }] }]}
+        pointerEvents="none"
+      >
+        {renderCells(active, 1, 'a')}
+      </Animated.View>
     </>
   );
 }
 
 export function BoardView({ cellSize }: Props) {
+  const textures = useBlockTextures();
   return (
     <View
       style={[
@@ -69,8 +113,8 @@ export function BoardView({ cellSize }: Props) {
         { width: cellSize * COLS, height: cellSize * VISIBLE_ROWS },
       ]}
     >
-      <SettledGrid cellSize={cellSize} />
-      <PieceOverlay cellSize={cellSize} />
+      <SettledGrid cellSize={cellSize} textures={textures} />
+      <PieceOverlay cellSize={cellSize} textures={textures} />
       <ClearEffects cellSize={cellSize} />
     </View>
   );

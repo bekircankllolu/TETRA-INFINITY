@@ -1,6 +1,8 @@
 import { useMemo, useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
+import { playSfx } from '../audio/sound';
 import type { GameAction } from '../core/types';
+import { getSettings } from '../state/prefs';
 import { gameStore } from '../state/store';
 
 /** Tüm dokunmatik eşikler — cihazda ayar için tek yer */
@@ -63,6 +65,7 @@ export function useBoardGesture(cellSize: number, boardWidth: number) {
           e.translationY > cellSize * TOUCH.SOFT_START_CELLS;
         if (vertical && !softActive.current) {
           softActive.current = true;
+          playSfx('softdrop');
           dispatch({ type: 'SOFT_DROP', on: true });
         } else if (!vertical && softActive.current) {
           softActive.current = false;
@@ -89,6 +92,7 @@ export function useBoardGesture(cellSize: number, boardWidth: number) {
           e.velocityY < -TOUCH.HOLD_MIN_VELOCITY &&
           e.translationY < -cellSize * TOUCH.HOLD_MIN_CELLS
         ) {
+          playSfx('hold');
           dispatch({ type: 'HOLD' });
         }
       })
@@ -104,9 +108,11 @@ export function useBoardGesture(cellSize: number, boardWidth: number) {
       .maxDistance(TOUCH.TAP_MAX_DISTANCE)
       .runOnJS(true)
       .onEnd((e) => {
-        // Sol üçte bir: saat yönü tersi; geri kalan: saat yönü
-        const dir = e.x < boardWidth / 3 ? 'ccw' : 'cw';
-        dispatch({ type: 'ROTATE', dir });
+        // Sağ elde sol üçte bir = ccw; solak modunda sağ üçte bir = ccw
+        const leftHanded = getSettings().leftHanded;
+        const ccwZone = leftHanded ? e.x > (boardWidth * 2) / 3 : e.x < boardWidth / 3;
+        playSfx('rotate');
+        dispatch({ type: 'ROTATE', dir: ccwZone ? 'ccw' : 'cw' });
       });
 
     // Race: hareket başlarsa pan kazanır, kısa dokunuşta tap ateşler

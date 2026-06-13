@@ -14,3 +14,9 @@ export const SOFT_DROP_POINTS_PER_ROW = 1;
 export const HARD_DROP_POINTS_PER_ROW = 2;
 
 export const LINES_PER_LEVEL = 10;
+
+/** Sprint modunda temizlenmesi gereken satır sayısı */
+export const SPRINT_GOAL_LINES = 40;
+
+/** Zen modunda yerçekimi bu sabit seviyede kalır (baskısız, hızlanmaz) */
+export const ZEN_GRAVITY_LEVEL = 1;

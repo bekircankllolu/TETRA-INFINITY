@@ -1,17 +1,18 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { QUEUE_SIZE } from '../core/constants';
+import { usePrefs } from '../state/prefs';
 import { useGame } from '../state/store';
 import { PiecePreview } from './PiecePreview';
 import { COLORS } from './theme';
 
-/** Sıradaki parçalar (5'li önizleme) */
+/** Sıradaki parçalar (ayardan 3-5 adet önizleme) */
 export function NextQueue() {
   const queue = useGame((s) => s.game.queue);
+  const nextCount = usePrefs((s) => s.settings.nextCount);
   return (
     <View style={styles.box}>
       <Text style={styles.label}>NEXT</Text>
-      {queue.slice(0, QUEUE_SIZE).map((type, i) => (
+      {queue.slice(0, nextCount).map((type, i) => (
         <PiecePreview key={`${i}-${type}`} type={type} cellSize={i === 0 ? 9 : 7} />
       ))}
     </View>

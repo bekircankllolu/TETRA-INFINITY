@@ -26,4 +26,13 @@ export const COLORS = {
   danger: '#FF3D5A',
   overlay: 'rgba(5, 3, 14, 0.93)',
   scrim: 'rgba(5, 3, 14, 0.5)',
+  gem: '#A855F7',
+  coin: '#FFB020',
 } as const;
+
+/** Koleksiyon nadirlik renkleri */
+export const RARITY: Record<string, string> = {
+  common: '#7C89B8',
+  epic: '#A855F7',
+  legendary: '#FFB020',
+};

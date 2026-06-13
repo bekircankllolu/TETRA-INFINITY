@@ -8,18 +8,27 @@ import {
   MAX_LOCK_RESETS,
   QUEUE_SIZE,
   SOFT_DROP_POINTS_PER_ROW,
+  SPRINT_GOAL_LINES,
+  ZEN_GRAVITY_LEVEL,
 } from './constants';
 import { gravityMs, softDropMs } from './gravity';
 import { clearScore, comboScore, isDifficultClear } from './scoring';
 import { tryRotate } from './srs';
 import { pieceCells, spawnPiece } from './tetromino';
 import { detectTSpin } from './tspin';
-import type { ActivePiece, GameAction, GameState, LockState } from './types';
+import type { ActivePiece, GameAction, GameMode, GameState, LockState } from './types';
 
 const INITIAL_LOCK: LockState = { grounded: false, elapsed: 0, resets: 0, lowestY: -1 };
 
-export function createInitialState(seed: number): GameState {
+/** Moda göre yerçekimi seviyesi: Zen sabit kalır, diğerleri seviyeyle hızlanır */
+function effectiveLevel(mode: GameMode, level: number): number {
+  return mode === 'zen' ? ZEN_GRAVITY_LEVEL : level;
+}
+
+export function createInitialState(seed: number, mode: GameMode = 'marathon'): GameState {
   const base: GameState = {
+    mode,
+    elapsedMs: 0,
     board: createBoard(),
     active: null,
     ghostY: 0,
@@ -127,6 +136,10 @@ function lockPiece(state: GameState): GameState {
     softDrop: state.softDrop,
   };
 
+  // Sprint: hedef satıra ulaşınca oyun kazanılır
+  if (state.mode === 'sprint' && totalLines >= SPRINT_GOAL_LINES) {
+    return { ...next, phase: 'win', active: null };
+  }
   if (lockOut) {
     return { ...next, phase: 'gameOver' };
   }
@@ -173,9 +186,9 @@ function dropOneRow(state: GameState, viaSoftDrop: boolean): GameState {
 
 function tick(state: GameState, dt: number): GameState {
   if (state.active === null) return state;
-  let s = state;
+  let s = { ...state, elapsedMs: state.elapsedMs + dt };
 
-  const grounded = isGrounded(state.board, state.active);
+  const grounded = isGrounded(s.board, s.active!);
   if (grounded) {
     const elapsed = (s.lock.grounded ? s.lock.elapsed : 0) + dt;
     if (elapsed >= LOCK_DELAY_MS) {
@@ -185,7 +198,8 @@ function tick(state: GameState, dt: number): GameState {
   }
 
   // Havada: yerçekimi biriktir, gerekirse birden çok satır düşür
-  const interval = s.softDrop ? softDropMs(s.level) : gravityMs(s.level);
+  const lvl = effectiveLevel(s.mode, s.level);
+  const interval = s.softDrop ? softDropMs(lvl) : gravityMs(lvl);
   let accum = s.gravityAccum + dt;
   let lock = s.lock.grounded ? { ...s.lock, grounded: false, elapsed: 0 } : s.lock;
   s = { ...s, lock };
@@ -199,9 +213,9 @@ function tick(state: GameState, dt: number): GameState {
 
 export function update(state: GameState, action: GameAction): GameState {
   if (action.type === 'NEW_GAME') {
-    return createInitialState(action.seed ?? 0);
+    return createInitialState(action.seed ?? 0, action.mode ?? 'marathon');
   }
-  if (state.phase === 'gameOver' || state.active === null) {
+  if (state.phase === 'gameOver' || state.phase === 'win' || state.active === null) {
     return state;
   }
 
@@ -224,7 +238,11 @@ export function update(state: GameState, action: GameAction): GameState {
     case 'SOFT_DROP':
       if (state.softDrop === action.on) return state;
       // Açılırken birikmiş yerçekimini sıfırla ki ilk hızlı düşüş anında gelsin
-      return { ...state, softDrop: action.on, gravityAccum: action.on ? softDropMs(state.level) : 0 };
+      return {
+        ...state,
+        softDrop: action.on,
+        gravityAccum: action.on ? softDropMs(effectiveLevel(state.mode, state.level)) : 0,
+      };
 
     case 'HARD_DROP': {
       const targetY = state.ghostY;

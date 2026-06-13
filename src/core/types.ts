@@ -16,6 +16,8 @@ export interface ActivePiece {
 
 export type TSpin = 'none' | 'mini' | 'full';
 
+export type GameMode = 'marathon' | 'sprint' | 'zen';
+
 export interface ClearInfo {
   readonly lines: number;
   readonly tspin: TSpin;
@@ -37,9 +39,12 @@ export interface LockState {
   readonly lowestY: number;
 }
 
-export type Phase = 'falling' | 'gameOver';
+export type Phase = 'falling' | 'gameOver' | 'win';
 
 export interface GameState {
+  readonly mode: GameMode;
+  /** TICK ile ilerleyen geçen süre (ms) — Sprint kronometresi için */
+  readonly elapsedMs: number;
   // Oyun alanı
   readonly board: Uint8Array; // sadece kilitlenmiş hücreler, satır-major 24x10
   readonly active: ActivePiece | null;
@@ -77,4 +82,4 @@ export type GameAction =
   | { type: 'SOFT_DROP'; on: boolean }
   | { type: 'HARD_DROP' }
   | { type: 'HOLD' }
-  | { type: 'NEW_GAME'; seed?: number };
+  | { type: 'NEW_GAME'; seed?: number; mode?: GameMode };

@@ -1,95 +1,144 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import {
   Image,
-  ImageBackground,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { buttonHaptic, playSfx } from '../audio/sound';
+import { levelFromXp, usePrefs, XP_PER_LEVEL, xpIntoLevel } from '../state/prefs';
 import { useGame } from '../state/store';
 import { IMAGES } from './assets';
+import { BottomNav, CurrencyBar, NeonButton, ScreenBackground, type NavKey } from './components';
+import { MODES } from './modeMeta';
 import { COLORS } from './theme';
 
-// logo.png 724x256 — genişlik/yükseklik oranı
 const LOGO_ASPECT = 724 / 256;
 
 export function MenuScreen() {
-  const startGame = useGame((s) => s.startGame);
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  // Net piksel genişliği: ekranın %84'ü ama en fazla 380 — taşmayı kesin önler
-  const logoWidth = Math.min(width * 0.84, 380);
+  const startGame = useGame((s) => s.startGame);
+  const navigate = useGame((s) => s.navigate);
+  const profile = usePrefs((s) => s.profile);
+
+  const level = levelFromXp(profile.xp);
+  const xpPct = xpIntoLevel(profile.xp) / XP_PER_LEVEL;
+  const logoWidth = Math.min(width * 0.74, 340);
+
+  const onNav = (key: NavKey) => {
+    if (key === 'collection') navigate('collection');
+    else if (key === 'leaderboard') navigate('leaderboard');
+    else if (key === 'settings') navigate('settings');
+  };
 
   return (
-    <ImageBackground source={IMAGES.background} style={styles.background} resizeMode="cover">
-      <View style={styles.scrim} />
-      <View style={styles.container}>
-        <Image
-          source={IMAGES.logo}
-          style={[styles.logo, { width: logoWidth, height: logoWidth / LOGO_ASPECT }]}
-          resizeMode="contain"
-        />
-        <Pressable
-          onPress={startGame}
-          style={({ pressed }) => [styles.play, pressed && styles.playPressed]}
+    <ScreenBackground>
+      <View style={[styles.root, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 6 }]}>
+        {/* Üst: profil + para */}
+        <View style={styles.topBar}>
+          <View style={styles.profile}>
+            <Image source={IMAGES.emblem} style={styles.avatar} resizeMode="contain" />
+            <View>
+              <Text style={styles.profileName}>PLAYER</Text>
+              <View style={styles.xpRow}>
+                <Text style={styles.profileLevel}>Lv. {level}</Text>
+                <View style={styles.xpBar}>
+                  <View style={[styles.xpFill, { width: `${xpPct * 100}%` }]} />
+                </View>
+              </View>
+            </View>
+          </View>
+          <CurrencyBar gems={profile.gems} coins={profile.coins} />
+        </View>
+
+        <ScrollView
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.playText}>OYNA</Text>
-        </Pressable>
-        <Text style={styles.hint}>
-          Sürükle: taşı · Dokun: döndür{'\n'}
-          Aşağı çek: yumuşak düşüş · Flick: bırak{'\n'}
-          Yukarı kaydır: sakla
-        </Text>
+          <Image
+            source={IMAGES.logo}
+            style={{ width: logoWidth, height: logoWidth / LOGO_ASPECT, marginVertical: 12 }}
+            resizeMode="contain"
+          />
+
+          <NeonButton
+            label="OYNA"
+            icon="play"
+            variant="primary"
+            onPress={() => startGame('marathon')}
+            style={styles.playButton}
+          />
+
+          {MODES.map((m) => (
+            <Pressable
+              key={m.id}
+              onPress={() => {
+                playSfx('click');
+                buttonHaptic();
+                startGame(m.id);
+              }}
+              style={({ pressed }) => [
+                styles.modeRow,
+                { borderColor: m.accent },
+                pressed && styles.pressed,
+              ]}
+            >
+              <MaterialCommunityIcons name={m.icon as never} size={26} color={m.accent} />
+              <View style={styles.modeText}>
+                <Text style={styles.modeName}>{m.name}</Text>
+                <Text style={styles.modeTag}>{m.tagline}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={COLORS.textDim} />
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <BottomNav active="home" onNavigate={onNav} />
       </View>
-    </ImageBackground>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrim: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: COLORS.scrim,
-  },
-  container: {
-    flex: 1,
+  root: { flex: 1, paddingHorizontal: 16 },
+  topBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    paddingHorizontal: 24,
+    justifyContent: 'space-between',
   },
-  logo: {
-    marginBottom: 40,
+  profile: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  avatar: { width: 40, height: 40 },
+  profileName: { color: COLORS.text, fontWeight: '800', fontSize: 14, letterSpacing: 1 },
+  xpRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  profileLevel: { color: COLORS.accent, fontWeight: '700', fontSize: 11 },
+  xpBar: {
+    width: 80,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(120,120,150,0.3)',
+    overflow: 'hidden',
   },
-  play: {
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: 64,
-    paddingVertical: 16,
+  xpFill: { height: 5, backgroundColor: COLORS.coin },
+  body: { alignItems: 'center', paddingVertical: 8, gap: 10 },
+  playButton: { width: '100%', paddingVertical: 18, marginBottom: 6 },
+  modeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    padding: 14,
     borderRadius: 12,
-    shadowColor: COLORS.accent,
-    shadowOpacity: 0.8,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 10,
+    borderWidth: 1,
+    backgroundColor: COLORS.panel,
   },
-  playPressed: {
-    opacity: 0.8,
-  },
-  playText: {
-    color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: 4,
-  },
-  hint: {
-    color: COLORS.textDim,
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 21,
-    marginTop: 28,
-  },
+  modeText: { flex: 1 },
+  modeName: { color: COLORS.text, fontWeight: '800', fontSize: 15, letterSpacing: 1 },
+  modeTag: { color: COLORS.textDim, fontSize: 12, marginTop: 2 },
+  pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
 });
