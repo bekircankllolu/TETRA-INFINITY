@@ -68,7 +68,10 @@ export function NeonButton({
       }}
       style={({ pressed }) => [
         styles.btn,
-        primary ? { backgroundColor: accent, borderColor: accent } : { borderColor: accent },
+        primary
+          ? { backgroundColor: accent, borderColor: accent, shadowColor: accent }
+          : { borderColor: accent, shadowColor: accent },
+        primary ? styles.btnGlowStrong : styles.btnGlow,
         disabled && styles.btnDisabled,
         pressed && styles.btnPressed,
         style,
@@ -270,6 +273,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16,12,38,0.6)',
   },
   btnPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
+  btnGlow: { shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 4 },
+  btnGlowStrong: { shadowOpacity: 0.9, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 10 },
   btnDisabled: { opacity: 0.4 },
   btnText: { fontSize: 15, fontWeight: '800', letterSpacing: 2 },
   back: {
