@@ -6,6 +6,7 @@ import type { ActivePiece } from '../core/types';
 import { useGame } from '../state/store';
 import { BLOCK_TEXTURES } from './assets';
 import { CellView } from './CellView';
+import { ClearEffects } from './ClearEffects';
 import { COLORS, GHOST_OPACITY } from './theme';
 
 interface Props {
@@ -70,6 +71,7 @@ export function BoardView({ cellSize }: Props) {
     >
       <SettledGrid cellSize={cellSize} />
       <PieceOverlay cellSize={cellSize} />
+      <ClearEffects cellSize={cellSize} />
     </View>
   );
 }

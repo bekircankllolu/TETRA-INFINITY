@@ -23,6 +23,8 @@ export interface ClearInfo {
   readonly b2b: boolean;
   readonly combo: number;
   readonly points: number;
+  /** Temizlenen satırların board satır indeksleri (çökme öncesi) — UI animasyonu için */
+  readonly clearedRows: readonly number[];
 }
 
 export interface LockState {

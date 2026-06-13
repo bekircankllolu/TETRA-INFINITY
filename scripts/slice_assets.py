@@ -78,19 +78,20 @@ def components(im, threshold=60, scale=4, min_area=400):
     return out
 
 
-def crop_cell(im, bbox, cols, rows, cell_col, cell_row, inset_frac=0.06, square=False):
-    """Parça bbox'undan tek bir hücre keser; kenarlardan içeri büzer.
-    square=True: hücre yüksekliği genişlikten türetilir (alt/üst parlama
-    bbox'u şişirdiğinde üstten hizalı kare hücre kullan)."""
+def crop_cell(im, bbox, cols, rows, cell_col, cell_row, inset_frac=0.06):
+    """Parça bbox'unun (col,row) hücresinin içine ORTALANMIŞ bir kare keser.
+    Kare kenarı = min(hücre_genişliği, hücre_yüksekliği); böylece üst/alt
+    parıltı bbox'u şişirse bile blok bozulmadan, koyu boşluk kapmadan çıkar."""
     x0, y0, x1, y1, _ = bbox
     cw = (x1 - x0) / cols
-    ch = cw if square else (y1 - y0) / rows
-    cx0 = x0 + cell_col * cw
-    cy0 = y0 + cell_row * ch
-    inset_x = cw * inset_frac
-    inset_y = ch * inset_frac
-    return im.crop((int(cx0 + inset_x), int(cy0 + inset_y),
-                    int(cx0 + cw - inset_x), int(cy0 + ch - inset_y)))
+    ch = (y1 - y0) / rows
+    side = min(cw, ch) * (1 - 2 * inset_frac)
+    # Hücre merkezi
+    ccx = x0 + (cell_col + 0.5) * cw
+    ccy = y0 + (cell_row + 0.5) * ch
+    half = side / 2
+    return im.crop((int(ccx - half), int(ccy - half),
+                    int(ccx + half), int(ccy + half)))
 
 
 def slice_blocks():
@@ -124,19 +125,28 @@ def slice_blocks():
     # Görsel düzeni: O I / T S / Z J / L  — her parçanın (kolon,satır) hücre seçimi
     spec = [
         ('o', 2, 2, 0, 1),  # alt sıra: üst kenara taşan parlamadan kaçın
-        ('i', 4, 1, 1, 0),
+        ('i', 4, 1, 1, 0),  # 4'lü sıranın 2. hücresi (ortalanmış kare)
         ('t', 3, 2, 1, 1),
         ('s', 3, 2, 1, 1),
         ('z', 3, 2, 1, 1),
         ('j', 3, 2, 1, 1),
-        ('l', 3, 2, 1, 1),
+        ('l', 3, 2, 1, 1),  # alt sıranın orta hücresi
     ]
+    # Otomatik tespit kötü kırpan parçalar için elle seçilmiş temiz kareler
+    EXPLICIT = {
+        'l': (520, 1200, 605, 1285),  # alt-orta hücre; oto-kırpma koyu bant kapıyordu
+    }
     os.makedirs(os.path.join(OUT, 'blocks'), exist_ok=True)
     for (name, cols, rws, cc, cr), bbox in zip(spec, flat):
-        cell = crop_cell(im, bbox, cols, rws, cc, cr, square=(name == 'l'))
+        if name in EXPLICIT:
+            cell = im.crop(EXPLICIT[name])
+            note = f'elle {EXPLICIT[name]}'
+        else:
+            cell = crop_cell(im, bbox, cols, rws, cc, cr)
+            note = f'bbox {bbox[:4]}'
         cell = cell.resize((96, 96), Image.LANCZOS)
         cell.save(os.path.join(OUT, 'blocks', f'{name}.png'), optimize=True)
-        print(f'blocks/{name}.png  <- bbox {bbox[:4]}')
+        print(f'blocks/{name}.png  <- {note}')
 
 
 def slice_buttons():

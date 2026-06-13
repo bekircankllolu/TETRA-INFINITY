@@ -1,5 +1,13 @@
 import React from 'react';
-import { Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useGame } from '../state/store';
 import { IMAGES } from './assets';
 import { COLORS } from './theme';
@@ -9,13 +17,17 @@ const LOGO_ASPECT = 724 / 256;
 
 export function MenuScreen() {
   const startGame = useGame((s) => s.startGame);
+  const { width } = useWindowDimensions();
+  // Net piksel genişliği: ekranın %84'ü ama en fazla 380 — taşmayı kesin önler
+  const logoWidth = Math.min(width * 0.84, 380);
+
   return (
     <ImageBackground source={IMAGES.background} style={styles.background} resizeMode="cover">
       <View style={styles.scrim} />
       <View style={styles.container}>
         <Image
           source={IMAGES.logo}
-          style={styles.logo}
+          style={[styles.logo, { width: logoWidth, height: logoWidth / LOGO_ASPECT }]}
           resizeMode="contain"
         />
         <Pressable
@@ -51,8 +63,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   logo: {
-    width: '92%',
-    aspectRatio: LOGO_ASPECT,
     marginBottom: 40,
   },
   play: {

@@ -104,7 +104,7 @@ function lockPiece(state: GameState): GameState {
     combo = lines > 0 ? newCombo : combo;
     // Satırsız T-spin B2B zincirini bozmaz; satırlı temizlemede zorluk belirler
     if (lines > 0) b2b = difficult;
-    lastClear = { lines, tspin, b2b: b2bApplied, combo, points };
+    lastClear = { lines, tspin, b2b: b2bApplied, combo, points, clearedRows: fullRows };
   }
   if (lines === 0) {
     combo = -1;
