@@ -1,8 +1,11 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { buttonHaptic, playSfx } from '../audio/sound';
 import { gameStore, useGame } from '../state/store';
+import { PanelChip } from './components';
 import { PiecePreview } from './PiecePreview';
-import { COLORS } from './theme';
+import { COLORS, GRADIENTS } from './theme';
 
 /** Saklanan parça. Kutuya dokunmak da HOLD yapar. */
 export function HoldBox() {
@@ -10,32 +13,33 @@ export function HoldBox() {
   const canHold = useGame((s) => s.game.canHold);
   return (
     <Pressable
-      onPress={() => gameStore.getState().dispatch({ type: 'HOLD' })}
+      onPress={() => {
+        playSfx('hold');
+        buttonHaptic();
+        gameStore.getState().dispatch({ type: 'HOLD' });
+      }}
       style={[styles.box, !canHold && styles.disabled]}
     >
-      <Text style={styles.label}>HOLD</Text>
-      <PiecePreview type={hold} />
+      <LinearGradient colors={GRADIENTS.panel} style={StyleSheet.absoluteFill} />
+      <PanelChip label="HOLD" />
+      <View style={styles.preview}>
+        <PiecePreview type={hold} />
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   box: {
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
     borderColor: COLORS.panelBorder,
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
     alignItems: 'center',
     gap: 6,
+    overflow: 'hidden',
   },
-  disabled: {
-    opacity: 0.45,
-  },
-  label: {
-    color: COLORS.textDim,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
+  disabled: { opacity: 0.4 },
+  preview: { alignItems: 'center', justifyContent: 'center' },
 });

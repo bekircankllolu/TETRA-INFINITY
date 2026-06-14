@@ -4,18 +4,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SPRINT_GOAL_LINES } from '../core/constants';
 import { useSampledElapsed } from '../hooks/useSampledElapsed';
 import { useGame } from '../state/store';
+import { StatPill } from './components';
 import { formatNumber, formatTime } from './format';
 import { modeMeta } from './modeMeta';
 import { COLORS } from './theme';
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
-  );
-}
 
 /** Skor / seviye / satır (veya Sprint için süre + hedef) + duraklat düğmesi */
 export function Hud({ onPause }: { onPause: () => void }) {
@@ -29,44 +21,44 @@ export function Hud({ onPause }: { onPause: () => void }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.modeRow}>
-        <MaterialCommunityIcons name={meta.icon as never} size={14} color={meta.accent} />
-        <Text style={[styles.modeLabel, { color: meta.accent }]}>{meta.name}</Text>
+      <View style={styles.topRow}>
+        <View style={styles.modeRow}>
+          <MaterialCommunityIcons name={meta.icon as never} size={14} color={meta.accent} />
+          <Text style={[styles.modeLabel, { color: meta.accent }]}>{meta.name}</Text>
+        </View>
+        <Pressable onPress={onPause} style={styles.pauseButton} hitSlop={8}>
+          <MaterialCommunityIcons name="pause" size={20} color={COLORS.text} />
+        </Pressable>
       </View>
       <View style={styles.row}>
         {mode === 'sprint' ? (
           <>
-            <Stat label="SÜRE" value={formatTime(elapsed)} />
-            <Stat label="SATIR" value={`${lines}/${SPRINT_GOAL_LINES}`} />
-            <Stat label="SKOR" value={formatNumber(score)} />
+            <StatPill label="SÜRE" value={formatTime(elapsed)} accent={meta.accent} />
+            <StatPill label="SATIR" value={`${lines}/${SPRINT_GOAL_LINES}`} accent={COLORS.accentCyan} />
+            <StatPill label="SKOR" value={formatNumber(score)} accent={COLORS.coin} />
           </>
         ) : (
           <>
-            <Stat label="SKOR" value={formatNumber(score)} />
-            <Stat label="SEVİYE" value={String(level)} />
-            <Stat label="SATIR" value={String(lines)} />
+            <StatPill label="SKOR" value={formatNumber(score)} accent={meta.accent} />
+            <StatPill label="SEVİYE" value={String(level)} accent={COLORS.accentCyan} />
+            <StatPill label="SATIR" value={String(lines)} accent={COLORS.coin} />
           </>
         )}
-        <Pressable onPress={onPause} style={styles.pauseButton} hitSlop={8}>
-          <MaterialCommunityIcons name="pause" size={20} color={COLORS.text} />
-        </Pressable>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { width: '100%', paddingHorizontal: 16, gap: 4 },
-  modeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  modeLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 2 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stat: { alignItems: 'center' },
-  statLabel: { color: COLORS.textDim, fontSize: 10, fontWeight: '700', letterSpacing: 1 },
-  statValue: { color: COLORS.text, fontSize: 20, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  container: { width: '100%', paddingHorizontal: 13, gap: 6 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 3 },
+  modeRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  modeLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 2 },
+  row: { flexDirection: 'row', alignItems: 'stretch' },
   pauseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
     backgroundColor: COLORS.panel,
     borderWidth: 1,
     borderColor: COLORS.panelBorder,

@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { COLS, HIDDEN_ROWS, VISIBLE_ROWS } from '../core/constants';
@@ -9,7 +10,19 @@ import { useGame } from '../state/store';
 import type { ColorTextureMap } from './assets';
 import { CellView } from './CellView';
 import { ClearEffects } from './ClearEffects';
-import { COLORS, GHOST_OPACITY } from './theme';
+import { COLORS, GHOST_OPACITY, GRADIENTS } from './theme';
+
+/** Board köşelerine neon L-aksanları */
+function CornerAccents() {
+  return (
+    <>
+      <View style={[styles.corner, styles.cTL]} />
+      <View style={[styles.corner, styles.cTR]} />
+      <View style={[styles.corner, styles.cBL]} />
+      <View style={[styles.corner, styles.cBR]} />
+    </>
+  );
+}
 
 interface Props {
   cellSize: number;
@@ -113,9 +126,11 @@ export function BoardView({ cellSize }: Props) {
         { width: cellSize * COLS, height: cellSize * VISIBLE_ROWS },
       ]}
     >
+      <LinearGradient colors={GRADIENTS.board} style={StyleSheet.absoluteFill} />
       <SettledGrid cellSize={cellSize} textures={textures} />
       <PieceOverlay cellSize={cellSize} textures={textures} />
       <ClearEffects cellSize={cellSize} />
+      <CornerAccents />
     </View>
   );
 }
@@ -124,17 +139,27 @@ const styles = StyleSheet.create({
   board: {
     backgroundColor: COLORS.boardBackground,
     borderWidth: 2,
-    borderColor: COLORS.panelBorder,
-    borderRadius: 4,
+    borderColor: COLORS.accent,
+    borderRadius: 6,
     overflow: 'hidden',
     shadowColor: COLORS.accent,
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
+    shadowOpacity: 0.85,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 8,
+    elevation: 10,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+  corner: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderColor: COLORS.accentCyan,
+  },
+  cTL: { top: 3, left: 3, borderTopWidth: 2, borderLeftWidth: 2 },
+  cTR: { top: 3, right: 3, borderTopWidth: 2, borderRightWidth: 2 },
+  cBL: { bottom: 3, left: 3, borderBottomWidth: 2, borderLeftWidth: 2 },
+  cBR: { bottom: 3, right: 3, borderBottomWidth: 2, borderRightWidth: 2 },
 });

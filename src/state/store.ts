@@ -88,3 +88,8 @@ export const gameStore = createStore<AppStore>()((set, get) => ({
 export function useGame<T>(selector: (s: AppStore) => T): T {
   return useStore(gameStore, selector);
 }
+
+// Web önizleme/ekran görüntüsü araçları için store'u erişilebilir kıl (zararsız)
+if (typeof window !== 'undefined') {
+  (globalThis as { __gameStore?: typeof gameStore }).__gameStore = gameStore;
+}

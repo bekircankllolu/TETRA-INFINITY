@@ -36,3 +36,11 @@ export const RARITY: Record<string, string> = {
   epic: '#A855F7',
   legendary: '#FFB020',
 };
+
+/** Gradyan tonları (expo-linear-gradient) */
+export const GRADIENTS = {
+  primary: ['#A855F7', '#6D28D9'] as const,
+  panel: ['rgba(28,22,58,0.92)', 'rgba(12,9,30,0.92)'] as const,
+  board: ['rgba(14,10,34,0.86)', 'rgba(6,4,16,0.9)'] as const,
+  cyan: ['#22D3EE', '#0E7490'] as const,
+};

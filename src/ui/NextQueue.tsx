@@ -1,9 +1,11 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { usePrefs } from '../state/prefs';
 import { useGame } from '../state/store';
+import { PanelChip } from './components';
 import { PiecePreview } from './PiecePreview';
-import { COLORS } from './theme';
+import { COLORS, GRADIENTS } from './theme';
 
 /** Sıradaki parçalar (ayardan 3-5 adet önizleme) */
 export function NextQueue() {
@@ -11,7 +13,8 @@ export function NextQueue() {
   const nextCount = usePrefs((s) => s.settings.nextCount);
   return (
     <View style={styles.box}>
-      <Text style={styles.label}>NEXT</Text>
+      <LinearGradient colors={GRADIENTS.panel} style={StyleSheet.absoluteFill} />
+      <PanelChip label="NEXT" />
       {queue.slice(0, nextCount).map((type, i) => (
         <PiecePreview key={`${i}-${type}`} type={type} cellSize={i === 0 ? 9 : 7} />
       ))}
@@ -21,18 +24,13 @@ export function NextQueue() {
 
 const styles = StyleSheet.create({
   box: {
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
     borderColor: COLORS.panelBorder,
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
     alignItems: 'center',
     gap: 8,
-  },
-  label: {
-    color: COLORS.textDim,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
+    overflow: 'hidden',
   },
 });

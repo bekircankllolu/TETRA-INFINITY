@@ -156,3 +156,8 @@ export const usePrefs = create<PrefsState>()(
 
 /** React dışından senkron okuma (ses/render katmanı için) */
 export const getSettings = () => usePrefs.getState().settings;
+
+// Web önizleme/ekran görüntüsü araçları için (zararsız)
+if (typeof window !== 'undefined') {
+  (globalThis as { __prefs?: typeof usePrefs }).__prefs = usePrefs;
+}

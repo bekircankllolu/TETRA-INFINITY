@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
   ImageBackground,
@@ -11,7 +12,7 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { buttonHaptic, playSfx } from '../audio/sound';
 import { IMAGES } from './assets';
-import { COLORS } from './theme';
+import { COLORS, GRADIENTS } from './theme';
 
 /** Arkaplan + okunabilirlik perdesi (tüm ekranlarda ortak) */
 export function ScreenBackground({ children }: { children: React.ReactNode }) {
@@ -33,7 +34,15 @@ export function NeonPanel({
   accent?: string;
 }) {
   return (
-    <View style={[styles.panel, accent ? { borderColor: accent } : null, style]}>{children}</View>
+    <View style={[styles.panel, accent ? { borderColor: accent } : null, style]}>
+      <LinearGradient
+        colors={GRADIENTS.panel}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.panelGradient}
+      />
+      {children}
+    </View>
   );
 }
 
@@ -77,17 +86,51 @@ export function NeonButton({
         style,
       ]}
     >
+      {primary && (
+        <LinearGradient
+          colors={GRADIENTS.primary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.btnGradient}
+        />
+      )}
       {icon && (
         <MaterialCommunityIcons
           name={icon as never}
           size={20}
-          color={primary ? COLORS.background : accent}
+          color={primary ? '#fff' : accent}
         />
       )}
-      <Text style={[styles.btnText, { color: primary ? COLORS.background : COLORS.text }]}>
-        {label}
-      </Text>
+      <Text style={[styles.btnText, { color: primary ? '#fff' : COLORS.text }]}>{label}</Text>
     </Pressable>
+  );
+}
+
+/** HUD/panel için çerçeveli istatistik pili */
+export function StatPill({
+  label,
+  value,
+  accent = COLORS.accent,
+}: {
+  label: string;
+  value: string;
+  accent?: string;
+}) {
+  return (
+    <View style={styles.statPill}>
+      <Text style={styles.statPillLabel}>{label}</Text>
+      <Text style={[styles.statPillValue]}>{value}</Text>
+      <View style={[styles.statPillBar, { backgroundColor: accent }]} />
+    </View>
+  );
+}
+
+/** Panel başlık çipi (HOLD / NEXT gibi) */
+export function PanelChip({ label }: { label: string }) {
+  return (
+    <View style={styles.chip}>
+      <Text style={styles.chipText}>{label}</Text>
+    </View>
   );
 }
 
@@ -260,7 +303,33 @@ const styles = StyleSheet.create({
     borderColor: COLORS.panelBorder,
     borderRadius: 14,
     padding: 14,
+    overflow: 'hidden',
   },
+  panelGradient: { ...StyleSheet.absoluteFillObject },
+  btnGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+  statPill: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 6,
+    marginHorizontal: 3,
+    borderRadius: 10,
+    backgroundColor: 'rgba(12,9,30,0.7)',
+    borderWidth: 1,
+    borderColor: COLORS.panelBorder,
+    overflow: 'hidden',
+  },
+  statPillLabel: { color: COLORS.textDim, fontSize: 9, fontWeight: '700', letterSpacing: 1 },
+  statPillValue: { color: COLORS.text, fontSize: 18, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  statPillBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, opacity: 0.9 },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: 'rgba(139,92,246,0.18)',
+    borderWidth: 1,
+    borderColor: COLORS.panelBorder,
+  },
+  chipText: { color: COLORS.accentCyan, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
   btn: {
     flexDirection: 'row',
     alignItems: 'center',
